@@ -711,10 +711,13 @@ class cParser:
     class cObj:
         class cExpr:
             def __init__(self, xInput):
-                self.xInput = xInput
-                while (self.xInput[0], self.xInput[-1]) == ("(", ")"):
-                    self.xInput = self.xInput[1:-1]
+                GetBracketCount = lambda x: x.count("(") - x.count(")")
                 
+                if GetBracketCount(xInput) != 0:
+                    cUtils.Error(f"Bracket mismatch: {xInput}".format())
+                
+                
+                self.xInput = xInput           
                 self.xInputTerminals = self.xInput.split(" ")
                 
                 self.xOpDecoder = {
@@ -749,8 +752,11 @@ class cParser:
                         
                 
                 if xUpperIndex is not None:
-                    self.xSubExpr1 = self.__class__(" ".join(self.xInputTerminals[:xUpperIndex]))
-                    self.xSubExpr2 = self.__class__(" ".join(self.xInputTerminals[xUpperIndex + 1:]))
+                    xSubExprStr1 = " ".join(self.xInputTerminals[:xUpperIndex])
+                    xSubExprStr2 = " ".join(self.xInputTerminals[xUpperIndex + 1:])
+                    
+                    self.xSubExpr1 = self.__class__(xSubExprStr1[GetBracketCount(xSubExprStr1):])
+                    self.xSubExpr2 = self.__class__(xSubExprStr2[:len(xSubExprStr2) + GetBracketCount(xSubExprStr2)])
                     self.xOperator = self.xInputTerminals[xUpperIndex]
                     self.OptimizeConstSubExpr()
                     
