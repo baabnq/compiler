@@ -790,7 +790,7 @@ class cParser:
                     except KeyError:
                         cUtils.Error(f"Invalid operator in constant expression: {self.xOperator}".format())
                     
-                    self.xInput    = str(xResult % cUtils.xIntLimit)
+                    self.xInput    = str(xResult % (cUtils.xIntLimit + 1))
                     self.xOperator = None
                     
             def Eval(self, xCodeGen):
