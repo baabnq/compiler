@@ -1009,8 +1009,7 @@ class cParser:
         
     
     def __init__(self):
-        pass
-    
+        self.xImportPathList = []
     
     #xImportParent is a list of the file potentially importing this file, to check for circle reference
     def Parse(self, xTokens = [], xUseParents = []):
@@ -1187,38 +1186,41 @@ class cParser:
                 #the use statement is evaled here
                                 
                 #remove the ' at the start and end of the path
-                xImportPath = xTokenContents[-2][1:-1]
+                xImportPath = xTokenContents[-2][1:-1].strip()
                 
-                #try to load path as file
-                try:
-                    xImportFileHandle = open(xImportPath)
-                    xImportFile = xImportFileHandle.read()
-                    xImportFileHandle.close()
-                                    
-                except FileNotFoundError:
-                    cUtils.LineError(xTokenBuffer[-3].xLine + 1, "Unable to load library file with path '{xPath}'".format(xPath = xImportPath))
-                
-                #if a circle reference is detected, the action needs to be passed back to the main caller, to handle the error
-                #this is done by returning a special error value
-                if xImportPath in xUseParents:
-                    #just return an instance of the exception class, because i'm too lazy to make my own
-                    return Exception()
-                
-                
-                
-                
-                xImportedCommandStream = self.Parse(cTokenizer().Tokenize(xImportFile, xPrintLine = False), xUseParents + [xImportPath])                
-                #check if error has been returned to catch
-                if type(xImportedCommandStream) is Exception:
-                    #after the error has been returned back to the main file parser, call the error
-                    if len(xUseParents) == 0:
-                        cUtils.LineError(xTokenBuffer[-3].xLine + 1, "Circle Reference while loading imported library")
-                        
-                    else:
+                if xImportPath not in self.xImportPathList:
+                    self.xImportPathList.append(xImportPath)
+                    
+                    #try to load path as file
+                    try:
+                        xImportFileHandle = open(xImportPath)
+                        xImportFile = xImportFileHandle.read()
+                        xImportFileHandle.close()
+                                        
+                    except FileNotFoundError:
+                        cUtils.LineError(xTokenBuffer[-3].xLine + 1, "Unable to load library file with path '{xPath}'".format(xPath = xImportPath))
+                    
+                    #if a circle reference is detected, the action needs to be passed back to the main caller, to handle the error
+                    #this is done by returning a special error value
+                    if xImportPath in xUseParents:
+                        #just return an instance of the exception class, because i'm too lazy to make my own
                         return Exception()
-
-                xCommandBuffer += xImportedCommandStream
-
+                    
+                    
+                    
+                    
+                    xImportedCommandStream = self.Parse(cTokenizer().Tokenize(xImportFile, xPrintLine = False), xUseParents + [xImportPath])                
+                    #check if error has been returned to catch
+                    if type(xImportedCommandStream) is Exception:
+                        #after the error has been returned back to the main file parser, call the error
+                        if len(xUseParents) == 0:
+                            cUtils.LineError(xTokenBuffer[-3].xLine + 1, "Circle Reference while loading imported library")
+                            
+                        else:
+                            return Exception()
+    
+                    xCommandBuffer += xImportedCommandStream
+    
                         
             else:                        
                 continue
