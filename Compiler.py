@@ -672,6 +672,7 @@ class cCodeGen:
                 
                 #allocate heap memory
                 self.xOutputCode += cCodeGen.cCommand.List2Self([
+                    "clr", None,
                     "set", self.StaticNAlloc(xAllocSize),
                     "add", None,
                     "sAD", xStringWritePtr,
