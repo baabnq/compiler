@@ -113,22 +113,32 @@ class cCodeGen:
         def __init__(self, xCommandList = []):
             #make copy of list to avoid weird python list point stuff
             self.xCommandList = xCommandList[:]
+            self.xChanged = True #track if xCommandList has been changed
+
+        def Update(self, xCheck = False):
+            if self.xChanged or not xCheck:
+                self.xChanged = False
+                self.xInsts = list(map(lambda x: x.xInst, self.xCommandList))
+                self.xArgs  = list(map(lambda x: x.xArg,  self.xCommandList))
             
         def __iadd__(self, xNewElement):
+            self.xChanged = True
             if   type(xNewElement) is cCodeGen.cCommandBuffer: self.xCommandList += xNewElement.xCommandList
             elif type(xNewElement) is cCodeGen.cCommand      : self.xCommandList.append(xNewElement)
-            
             return self
         
         def __add__(self, xOtherValue):
+            self.xChanged = True
             if   type(xOtherValue) is cCodeGen.cCommandBuffer: return cCodeGen.cCommandBuffer(self.xCommandList + xOtherValue.xCommandList)
             elif type(xOtherValue) is cCodeGen.cCommand      : return cCodeGen.cCommandBuffer(self.xCommandList + [xOtherValue])
-        
+
         def GetInsts(self):
-            return [x.xInst for x in self.xCommandList]
+            self.Update(xCheck = True)
+            return self.xInsts
 
         def GetArgs(self):
-            return [x.xArg for x in self.xCommandList]
+            self.Update(xCheck = True)
+            return self.xArgs
         
         def __iter__(self):
             return iter(self.xCommandList)
@@ -141,28 +151,48 @@ class cCodeGen:
             return "\n".join([str(x) for x in self.xCommandList])
             
     
-    class cOptimizer:
-        
-        
-        
-        
-        
-        #takes a command buffer and optimizes the commands
+    class cOptimizer:        
         @staticmethod
         def Optimize(xCommandBuffer):
-            #iterate over all commands            
-            
+                        
             xIndex = 0
             while xIndex < len(xCommandBuffer):
-        
+                
+                #pha
+                #pla
+                #=> (nothing changes)
+                #
                 if xCommandBuffer.GetInsts()[xIndex:xIndex + 2] == ["pha", "pla"]:
                     xCommandBuffer.xCommandList.pop(xIndex)
                     xCommandBuffer.xCommandList.pop(xIndex)
+                    xCommandBuffer.Update()
             
+                #sAD x
+                #lDA x
+                #=> (value is still stored)
+                #sAD x
+                #(same with reg)
                 elif xCommandBuffer.GetInsts()[xIndex:xIndex + 2] in [["sAD", "lDA"], ["sRD", "lDR"]] and \
-                     xCommandBuffer.GetArgs()[xIndex] == xCommandBuffer.GetArgs()[xIndex + 1]:
-                                                
-                        xCommandBuffer.xCommandList.pop(xIndex + 1)
+                xCommandBuffer.GetArgs()[xIndex] == xCommandBuffer.GetArgs()[xIndex + 1]:
+                    xCommandBuffer.xCommandList.pop(xIndex + 1)
+                    xCommandBuffer.Update()
+
+                #clr
+                #set 0
+                #=> (reg = 0; reg = 0 <=> reg = 0)
+                #clr
+                elif xCommandBuffer.GetInsts()[xIndex:xIndex + 2] == ["clr", "set"] and \
+                int(xCommandBuffer.GetArgs()[xIndex + 1]) == 0:
+                    xCommandBuffer.xCommandList.pop(xIndex + 1)
+                    xCommandBuffer.Update()                        
+
+                #clr
+                #add
+                #=> (0 + 0 = 0)
+                #clr 
+                elif xCommandBuffer.GetInsts()[xIndex:xIndex + 2] == ["clr", "add"]:
+                    xCommandBuffer.xCommandList.pop(xIndex + 1)
+                    xCommandBuffer.Update()                        
 
                 else:
                     xIndex += 1
