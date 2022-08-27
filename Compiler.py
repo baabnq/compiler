@@ -1424,8 +1424,6 @@ if __name__ == '__main__':
     
     xIoPaths = {}
     
-    Isolate = lambda x: x.replace("{", "{{").replace("}", "}}")
-    
     while len(xArgBuffer) > 1:
         xArgIter = xArgBuffer.pop(0)
         
@@ -1445,15 +1443,10 @@ if __name__ == '__main__':
     
     xCompiler = cCompiler()
     xAssemblerOutput, xVarMapper = xCompiler.Compile(xRawInput)
-    xFormattedOutput = f'{Isolate(xAssemblerOutput)}\n\n\n\n\n "Compiled from source: {str(xIoPaths["input"])}'.format()
+    xFormattedOutput = f'{xAssemblerOutput}\n\n\n\n\n "Compiled from source: {str(xIoPaths["input"])}'
 
     #add more info if requested
-    if xMoreInfo:
-        xVarsFormatted = str(Isolate(xVarMapper))
-        xFinalOutput = f'"{xVarsFormatted}\n\n\n{xFormattedOutput}'.format()
-    
-    else:
-        xFinalOutput = xFormattedOutput
+    xFinalOutput = f'"{str(xVarMapper)}\n\n\n{xFormattedOutput}' if xMoreInfo else xFormattedOutput
     
     xOutputFile = open(xIoPaths["output"], "w")
     xOutputFile.write(xFinalOutput)
