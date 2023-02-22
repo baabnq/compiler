@@ -30,6 +30,10 @@ class cUtils:
             yield x
             x += 1
 
+    @staticmethod    
+    def UnescapeStr(xStr):
+        return xStr.encode('utf-8').decode('unicode_escape')
+
 
 
 
@@ -684,14 +688,11 @@ class cCodeGen:
                 if xAllocStringObj.xType != objTypes.STRING:
                     cUtils.LineError(self.xLineNumber, "Alloc Object must be String")
 
-                xRawStringData = [0]
-                for xLineIterator in xAllocString.split("\\n"):
-                    xRawStringData += [ord(x) for x in xLineIterator] + [10]
-
+                xRawStringData = [0] + [ord(x) for x in cUtils.UnescapeStr(xAllocString)] + [0]
+                #for xLineIterator in xAllocString.split("\\n"):
+                #    xRawStringData += [ord(x) for x in xLineIterator] + [10]
                 
-                xAllocSize = len(xRawStringData)
-                
-                xRawStringData[-1] = 0
+                xAllocSize = len(xRawStringData)                
                 xRawStringData[0] = xAllocSize #override placeholder
                 
                 
