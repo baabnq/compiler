@@ -500,9 +500,11 @@ class cCodeGen:
 
                 #convert in into ascii and add a NULL terminator
                 #the 0 is a placeholder for the size of the chunk
-                xRawStringData = [0]
-                for xLineIterator in xAllocString.split("\\n"):
-                    xRawStringData += [ord(x) for x in xLineIterator] + [10]
+                xRawStringData = [0] + [ord(x) for x in cUtils.UnescapeStr(xAllocString)] + [0]
+
+                #xRawStringData = [0]
+                #for xLineIterator in xAllocString.split("\\n"):
+                #    xRawStringData += [ord(x) for x in xLineIterator] + [10]
 
                 #override the last newline with a NULL terminator
                 #(yes, terminators are generally bad, but in this case it's fine because it's known to compile time that the terminator
