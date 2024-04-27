@@ -1,4 +1,5 @@
-
+import argparse
+from dataclasses import dataclass
 
 
 class cUtils:
@@ -35,22 +36,6 @@ class cUtils:
         return xStr.encode('utf-8').decode('unicode_escape')
 
 
-
-
-class cTokenTypes:
-    def __init__(self):
-        xGen = cUtils.Gen()
-        
-        self.STRING         = next(xGen)
-        self.EXPR           = next(xGen)
-        self.COMMAND        = next(xGen)
-        self.OPERATOR       = next(xGen)
-        self.JUMPCONDOP     = next(xGen)
-        self.ASSIGNMENT     = next(xGen)
-        self.CONDOP         = next(xGen)
-        self.NAME           = next(xGen)
-        self.ENDOFSTATEMENT = next(xGen)
-
 class cObjTypes:
     def __init__(self):
         xGen = cUtils.Gen()
@@ -84,7 +69,6 @@ class cCommandTypes:
         self.ASM            = next(xGen)
         self.FREE           = next(xGen)
 
-tokenTypes   = cTokenTypes()
 objTypes     = cObjTypes()
 commandTypes = cCommandTypes()
 
@@ -1265,13 +1249,33 @@ class cParser:
         return xCommandBuffer
 
 
+
+class cTokenTypes:
+    def __init__(self):
+        xGen = cUtils.Gen()
+        
+        self.STRING         = next(xGen)
+        self.EXPR           = next(xGen)
+        self.COMMAND        = next(xGen)
+        self.OPERATOR       = next(xGen)
+        self.JUMPCONDOP     = next(xGen)
+        self.ASSIGNMENT     = next(xGen)
+        self.CONDOP         = next(xGen)
+        self.NAME           = next(xGen)
+        self.ENDOFSTATEMENT = next(xGen)
+
+tokenTypes   = cTokenTypes()
+
+
+
 class cTokenizer:
+    @dataclass
     class cToken:
-        def __init__(self, xTokenContent, xTokenType, xLine, xLineContent):
-            self.xTokenContent = xTokenContent
-            self.xTokenType    = xTokenType
-            self.xLine         = xLine
-            self.xLineContent  = xLineContent
+        xTokenContent : str
+        xTokenType    : int
+        xLine         : int
+        xLineContent  : str
+        #self.xIndex        
                         
         def __str__(self):
             return str(self.xLine + 1) + "\t" + "{xMessage: <25}".format(xMessage = str(self.xTokenContent)) + str(self.xTokenType)
@@ -1420,39 +1424,28 @@ class cCompiler:
 
 
 if __name__ == '__main__':
-    import sys
-    xArgs = sys.argv
-    xArgBuffer = xArgs
-    xMoreInfo = "--MoreInfo" in xArgs
-    
-    xIoPaths = {}
-    
-    while len(xArgBuffer) > 1:
-        xArgIter = xArgBuffer.pop(0)
-        
-        if xArgIter == "--input":
-            xIoPaths["input"] = xArgBuffer.pop(0)
 
-        elif xArgIter == "--output":
-            xIoPaths["output"] = xArgBuffer.pop(0)
-        
-    del xArgBuffer
-    if sorted(xIoPaths) != ["input", "output"]:
-        cUtils.Error("Invaild call arguments")
+    xParser = argparse.ArgumentParser(
+        prog='Compiler',
+        description='Baabnq Compiler',
+        epilog='Good luck :3')
     
-    xInputFile = open(xIoPaths["input"])
-    xRawInput = xInputFile.read()
-    xInputFile.close()
+    xParser.add_argument('-i', '--input', dest="inPath", required=True)
+    xParser.add_argument('-o', '--output', dest="outPath", default="build.s1")
+    xArgs = xParser.parse_args()
+    
+    with open(xArgs.inPath, "r") as xInFile:
+        xIn = xInFile.read()
     
     xCompiler = cCompiler()
-    xAssemblerOutput, xVarMapper = xCompiler.Compile(xRawInput)
-    xFormattedOutput = f'{xAssemblerOutput}\n\n\n\n\n "Compiled from source: {str(xIoPaths["input"])}'
+    xAsm, xVarMapper = xCompiler.Compile(xIn)
+    xOut = f'{xAsm}\n\n\n\n\n "Compiled from source: {xArgs.inPath}'
 
-    #add more info if requested
-    xFinalOutput = f'"{str(xVarMapper)}\n\n\n{xFormattedOutput}' if xMoreInfo else xFormattedOutput
-    
-    xOutputFile = open(xIoPaths["output"], "w")
-    xOutputFile.write(xFinalOutput)
-    xOutputFile.close()
+    with open(xArgs.outPath, "w") as xOutFile:
+        xOutFile.write(xOut)
     
     print("\n\n\n\n\nCompilation was successful")
+    
+    
+    
+    
