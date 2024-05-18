@@ -4,15 +4,8 @@ import sys
 
 
 class cUtils:
-    xIntLimit = int("1" * 16, 2)
+    xIntLimit = (2 ** 16) - 1
     xMemLimit = xIntLimit // 2
-
-    class cVariable:
-        def __init__(self, xValue):
-            self.xValue = xValue
-    
-        def __int__(self):
-            return int(self.xValue)
     
     @staticmethod
     def Error(xMessage):
@@ -216,12 +209,15 @@ class cCodeGen:
         else:
             cUtils.LineError(self.xLineNumber, "Unable to map variable with name '{xName}'".format(xName = xIndex))
 
+    def FormatLab(self, xIndex):
+        return f"temp{xIndex}"
+
     def GetTempLab(self):
-        self.xTempLabIndex = 0
-        while f"Temp{self.xTempLabIndex}".format() in self.xLabels:
+        xTempLabel = None
+        while xTempLabel in self.xLabels + [None]:
+            xTempLabel = self.FormatLab(self.xTempLabIndex)
             self.xTempLabIndex += 1
         
-        xTempLabel = f"Temp{self.xTempLabIndex}".format() 
         self.xLabels.append(xTempLabel)
         return xTempLabel
     
@@ -1309,7 +1305,7 @@ class cTokenizer:
         for xLineIndex in range(len(xLines)):
             xLineIter = xLines[xLineIndex]
             if xPrintLine: 
-                print("{xLineIndex: <10} {xLineIter}".format(xLineIter = xLineIter, xLineIndex = xLineIndex + 1))
+                print(f"{xLineIndex+1: <10} {xLineIter}")
             
             for xSplitLineIter in xLineIter.split(" "):
                 #check for comment and keep consuming terminal while on the same line
@@ -1421,6 +1417,11 @@ class cCompiler:
         xCommandList    = self.xParser.Parse(xTokenList)
         xOutputAssembly = self.xCodeGen.Generate(xCommandList)
         
+        xUsed  = self.xCodeGen.xMemUsedIndex
+        xTotal = cUtils.xMemLimit
+        
+        print(f"\nStatically allocated Memory: {round(xUsed / xTotal * 100, 5)}% ({xTotal} / {xUsed})")
+        
         return xOutputAssembly, self.xCodeGen.xVarMapper
 
 
@@ -1445,7 +1446,7 @@ if __name__ == '__main__':
     with open(xArgs.outPath, "w") as xOutFile:
         xOutFile.write(xOut)
     
-    print("\n\n\n\n\nCompilation was successful")
+    print("\nCompilation was successful")
     
     
     
