@@ -1208,9 +1208,8 @@ class cParser:
                     
                     #try to load path as file
                     try:
-                        xImportFileHandle = open(xImportPath)
-                        xImportFile = xImportFileHandle.read()
-                        xImportFileHandle.close()
+                        with open(xImportPath, "r", encoding = 'utf-8') as f:
+                            xImportFile = f.read()
                                         
                     except FileNotFoundError:
                         cUtils.LineError(xTokenBuffer[-3].xLine + 1, "Unable to load library file with path '{xPath}'".format(xPath = xImportPath))
@@ -1436,7 +1435,7 @@ if __name__ == '__main__':
     xParser.add_argument('-o', '--output', dest="outPath", default="build.s1")
     xArgs = xParser.parse_args()
     
-    with open(xArgs.inPath, "r") as xInFile:
+    with open(xArgs.inPath, "r", encoding = 'utf-8') as xInFile:
         xIn = xInFile.read()
     
     xCompiler = cCompiler()
