@@ -649,11 +649,22 @@ class cCodeGen:
                 if xAllocSizeInt == 0:
                     cUtils.LineError(self.xLineNumber, f"Alloc Size must not be 0")
                     
+                xTempAddr = self.TempAlloc(1)[0]
+                
+                xAllocSizeFull = xAllocSizeInt + 1
 
-                xBasePointer = self.StaticNAlloc(xAllocSizeInt)
+                #plus one for length information
+                xBasePointer = self.StaticNAlloc(xAllocSizeFull)
                 self.xOutputCode += cCodeGen.cCommand.List2Self([
-                    "clr", None,
+                    #write lenght information
                     "set", xBasePointer,
+                    "sRD", xTempAddr,                    
+                    "set", xAllocSizeFull,
+                    "sRP", xTempAddr,
+                
+                    #write pointer
+                    "clr", None,
+                    "set", xBasePointer + 1,
                     "add", None,
                     "pha", None,
                     
@@ -671,12 +682,11 @@ class cCodeGen:
                 if xAllocStringObj.xType != objTypes.STRING:
                     cUtils.LineError(self.xLineNumber, "Alloc Object must be String")
 
-                xRawStringData = [0] + [ord(x) for x in cUtils.UnescapeStr(xAllocString)] + [0]
-                #for xLineIterator in xAllocString.split("\\n"):
-                #    xRawStringData += [ord(x) for x in xLineIterator] + [10]
+                xRawStringData = [ord(x) for x in cUtils.UnescapeStr(xAllocString)]
+                xFullData = [0] + xRawStringData + [0]
                 
-                xAllocSize = len(xRawStringData)                
-                xRawStringData[0] = xAllocSize #override placeholder
+                xAllocSize = len(xFullData)                
+                xFullData[0] = xAllocSize #override placeholder
                 
                 
                 
@@ -696,7 +706,7 @@ class cCodeGen:
                                         
                     ]) + xBasePointerObj.Set(self)
                     
-                for xCharIter in xRawStringData:
+                for xCharIter in xFullData:
                     self.xOutputCode += cCodeGen.cCommand.List2Self([
                         "set", xCharIter,
                         "jmS", "_WriteChar",
