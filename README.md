@@ -1,5 +1,5 @@
 # The Baabnq Compiler
-
+```
 usage: Compiler [-h] -i INPATH [-o OUTPATH]
 
 Baabnq Compiler
@@ -10,3 +10,4 @@ optional arguments:
   -o OUTPATH, --output OUTPATH
 
 Good luck :3
+```
