@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import argparse
 from dataclasses import dataclass
 import sys
